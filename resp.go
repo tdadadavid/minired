@@ -12,11 +12,15 @@ import (
 
 // this is a simple RESP parser.
 func main() {
+	input := "$5\r\nahmed\r\n"
+	ParseResp(input)
+}
+
+func ParseResp(input string) {
 	// given a string like this '$5/r/n/ahmed/r/n'
 	// we need to parse this, this string according to RESP
 	// is a bulk string, (a bulk string starts with $ and the length of the value (5))
 
-	input := "$5\r\nahmed\r\n"
 	reader := bufio.NewReader(strings.NewReader(input))
 
 	// read first byte from the buffer
