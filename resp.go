@@ -16,7 +16,7 @@ func main() {
 	ParseResp(input)
 }
 
-func ParseResp(input string) {
+func ParseResp(input string) string {
 	// given a string like this '$5/r/n/ahmed/r/n'
 	// we need to parse this, this string according to RESP
 	// is a bulk string, (a bulk string starts with $ and the length of the value (5))
@@ -49,5 +49,5 @@ func ParseResp(input string) {
 	reader.Read(name)
 
 	fmt.Println(string(name))
-
+	return string(name)
 }
