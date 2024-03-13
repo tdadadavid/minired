@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io"
+	"go_redis/lib"
 	"net"
-	"os"
 )
 
 func main() {
@@ -12,7 +11,7 @@ func main() {
 
 
 	//create a tcp listener on port 6379
-	listener, err := net.Listen("tcp", "6379")
+	listener, err := net.Listen("tcp", ":6379")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -29,23 +28,18 @@ func main() {
 	// [remember to study tcp,http protocols]
 	defer conn.Close() 
 
+
 	for {
-		// create a buffer in memory
-		buff := make([]byte, 1024)
+		resp := lib.NewResp(conn)
 
-		// read but ignore the content from the client
-		_, err := conn.Read(buff)
-		if err != nil { 
-			if err == io.EOF { //if there is end-of-file error break from the loop
-				break
-			}
-			fmt.Println("Error reading from client", err.Error())
-			os.Exit(1) // stop the server.
+		value, err := resp.Read()
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
-
+		fmt.Println(value)
 		// for any request the user makes return a pong.
-		conn.Write([]byte("+Ok\r\n"))
+		conn.Write([]byte("+PONG\r\n"))
 	}
-
-	fmt.Println("Hello world.")
+		
 }
