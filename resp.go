@@ -96,7 +96,8 @@ func (resp *RESP) Read() (Value, error) {
 
 
 func (resp *RESP) readArray() (Value, error) {
-	value := Value{ typ: "array" }
+	value := Value{}
+	value.typ = "array"
 
 	// get the len of the array by reading the next character.
 	// ["*", "2", ""]
@@ -123,7 +124,8 @@ func (resp *RESP) readArray() (Value, error) {
 }
 
 func (resp *RESP) readBulk() (Value, error) {
-	val := Value{ typ: "bulk" }
+	val := Value{}
+	val.typ = "bulk"
 
 	// read next byte to know the length of the string
 	// indicates the length of the string 
@@ -136,6 +138,7 @@ func (resp *RESP) readBulk() (Value, error) {
 	resp.reader.Read(bulk)
 	val.bulk = string(bulk)
 
+	//read trailing line [CLRF]
 	resp.readLine()
 
 	return val, nil
