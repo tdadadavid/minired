@@ -94,6 +94,10 @@ func (resp *RESP) Read() (Value, error) {
 	}
 }
 
+// while this implementation works it does not 
+// follow the standard of the resp design. for example
+// the *2 means the request is of array type and 2 elements
+// are these arrays. but here I am not using any of these  information.
 func (resp *RESP) readArray() (Value, error) {
 	_, err := resp.reader.ReadByte()
 	if err != nil {
@@ -132,23 +136,17 @@ func (resp *RESP) readBulk() (Value, error) {
 
 	// read next byte to know the length of the string
 	// indicates the length of the string 
-	size, _ := resp.reader.ReadByte()
+	size, _, err := resp.readInteger()
+	if err != nil {
+		return val, err
+	}
 
-	inputSize, _ := strconv.ParseInt(string(size), 10, 64)
+	bulk := make([]byte, size)
+	resp.reader.Read(bulk)
+	val.bulk = string(bulk)
 
-	// current position in parsing: ['$', '5', '/r', '/n', 'ahmed', '/r', '/n']
-	//																			    ^
-	resp.reader.ReadByte()
+	// resp.readLine()
 
-	// current position in parsing: ['$', '5', '/r', '/n', 'ahmed', '/r', '/n']
-	//																						     ^
-	resp.reader.ReadByte()
-
-
-	name := make([]byte, inputSize)
-	resp.reader.Read(name)
-
-	val.str = string(name)
 	return val, nil
 }
 
