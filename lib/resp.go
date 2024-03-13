@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"bufio"
@@ -33,8 +33,8 @@ type Resp struct {
 	reader *bufio.Reader
 }
 
-func NewResp(reader io.Reader) *Resp {
-	return &Resp{ reader: bufio.NewReader(reader) }
+func NewResp(rd io.Reader) *Resp {
+	return &Resp{ reader: bufio.NewReader(rd) }
 }
 
 func (r *Resp) readLine() (line []byte, n int, err error) {
