@@ -19,7 +19,8 @@ func main() {
 func ParseResp(input string) string {
 	// given a string like this '$5/r/n/ahmed/r/n'
 	// we need to parse this, this string according to RESP
-	// is a bulk string, (a bulk string starts with $ and the length of the value (5))
+	// the example given is a bulk string starts
+	// with $ and the length of the value (5))
 
 	reader := bufio.NewReader(strings.NewReader(input))
 
@@ -27,11 +28,13 @@ func ParseResp(input string) string {
 	firstCharBuf, _ := reader.ReadByte()
 
 	// now if the first byte read is not '$' then we reject it
+	// why? becuase we are first considering a bulk string.
 	if firstCharBuf != '$' {
 		fmt.Println("Error: Invalid type provided. Only bulk strings are supported")
 		os.Exit(1)
 	}
 
+	// indicates the length of the string 
 	size, _ := reader.ReadByte()
 
 	inputSize, _ := strconv.ParseInt(string(size), 10, 64)
