@@ -39,9 +39,9 @@ func NewRESP(reader io.Reader) *RESP {
 	return &RESP{ reader: bufio.NewReader(reader) }
 }
 
-func (this *RESP) readLine() (line []byte, n int, err error) {
+func (resp *RESP) readLine() (line []byte, n int, err error) {
 	for {
-		byte, err := this.reader.ReadByte()
+		byte, err := resp.reader.ReadByte()
 		if err != nil {
 			return nil, 0, err
 		}
@@ -62,8 +62,8 @@ func (this *RESP) readLine() (line []byte, n int, err error) {
 }
 
 
-func (this *RESP) readInteger() (num int, n int, err error) {
-	line, n, err := this.readLine()
+func (resp *RESP) readInteger() (num int, n int, err error) {
+	line, n, err := resp.readLine()
 	if err != nil {
 		return 0, 0, nil
 	}
@@ -89,45 +89,36 @@ func (resp *RESP) Read() (Value, error) {
 	case BULK:
 		return resp.readBulk()
 	default:
-		fmt.Printf("Unknown type: %v", string(resp_type))
+		fmt.Println("Unknown type: ", string(resp_type))
 		return Value{}, nil
 	}
 }
 
-// while this implementation works it does not 
-// follow the standard of the resp design. for example
-// the *2 means the request is of array type and 2 elements
-// are these arrays. but here I am not using any of these  information.
-func (resp *RESP) readArray() (Value, error) {
-	_, err := resp.reader.ReadByte()
-	if err != nil {
-		return Value{}, err
-	}
 
+func (resp *RESP) readArray() (Value, error) {
 	value := Value{ typ: "array" }
 
-	for {
-		// read the /r/n bytes 
-		resp.reader.ReadByte()
-		resp.reader.ReadByte()
-
-		_type, err := resp.reader.ReadByte()
-		if err != nil {
-			break
-		}
-
-		switch _type {
-		case BULK:
-			val, err := resp.readBulk()
-			if err != nil {
-				break
-			}
-			value.array = append(value.array, val)
-		default:
-			fmt.Println("Unknown type: ", string(_type))
-			return Value{}, nil
-		}
+	// get the len of the array by reading the next character.
+	// ["*", "2", ""]
+	//        ^
+	// the 2 specifies the number of elements in the array request.
+	arr_len, _, err := resp.readInteger()
+	if err != nil {
+		return value, err
 	}
+
+	value.array = make([]Value, 0)
+
+	for i := 0; i < arr_len; i++ {
+		// recursion happens here [read the next stream of bytes.]
+		val, err := resp.Read() 
+		if err != nil {
+			return value, err
+		}
+
+		value.array = append(value.array, val)
+	}
+
 	return value, nil
 }
 
@@ -145,7 +136,7 @@ func (resp *RESP) readBulk() (Value, error) {
 	resp.reader.Read(bulk)
 	val.bulk = string(bulk)
 
-	// resp.readLine()
+	resp.readLine()
 
 	return val, nil
 }
