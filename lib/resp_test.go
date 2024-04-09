@@ -23,7 +23,7 @@ func TestReadBulk_WhenCorrectSyntacIsNotPassed(t *testing.T) {
 
 func TestReadBulk_WhenCorrectSyntaxIsPassed(t *testing.T) {
 	t.Run("It returns the actual string when the correct bulk string is sent from client", func(t *testing.T) {
-		// we need to remove the number because the "Read" function already parses it
+		// we need to remove the $ symbol because the "Read" function already parses it
 		right_bulk_string := "6\r\nsixtyo\r\n" 
 		reader := strings.NewReader(right_bulk_string)
 		resp := NewResp(reader)
