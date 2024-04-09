@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+
 )
 
 // Reference study: https://redis.io/docs/reference/protocol-spec/
@@ -16,16 +17,18 @@ const (
 	ERROR = '-'
 	INTEGER = ':'
 	ARRAY = '*'
+	NULL = '_'
 )
 
 // will hold the request arguements and command
 // it will be used in the serialization/desrialization of reqeust
 type Value struct {
-	typ string // holds the datatype of the value from the request.
-	num int32 // holds all integer request.
-	str string // holds all string requests.
+	typ string // holds the datatype of the value from the requests.
+	num int32 // holds all integer requests.
+	str byte // holds all string requests.
 	bulk string // holds all bulk string requests.
 	array []Value // holds all array requests
+	error string
 }
 
 
@@ -35,6 +38,110 @@ type Resp struct {
 
 func NewResp(rd io.Reader) *Resp {
 	return &Resp{ reader: bufio.NewReader(rd) }
+}
+
+func (r *Resp) Read() (Value, error) {
+	resp_type, err := r.reader.ReadByte()
+	if err != nil {
+		return Value{}, err
+	}
+
+	switch resp_type {
+	case ARRAY:
+		return r.readArray()
+	case BULK:
+		return r.readBulk()
+	default:
+		fmt.Println("Unknown type: ", string(resp_type))
+		return Value{}, nil
+	}
+}
+
+// Convert respsonse into RESP type.
+func (v Value) Marshal() ([]byte)  {
+	switch v.typ {
+	case "array":
+		return v.marshalArray()
+	case "bulk":
+		return v.marshalBulk()
+	case "string":
+		return v.marshalString()
+	case "null":
+		return v.marshallNull()
+	case "error":
+		return v.marshallError()
+	default:
+		return []byte{}
+	}
+}
+
+// Structure of RESP "error":
+// _[Carriage Return Line Feed]
+// doc: https://redis.io/docs/latest/develop/reference/protocol-spec/#simple-errors
+func (v Value) marshallNull() []byte {
+	var bytes []byte
+	bytes = append(bytes, NULL)
+	bytes = append(bytes, '\r', '\n')
+	return bytes
+}
+
+// Structure of RESP "nll":
+// -[Error Message][Carriage Return Line Feed]
+// doc: https://redis.io/docs/latest/develop/reference/protocol-spec/#nulls
+func (v Value) marshallError() []byte {
+	var bytes []byte
+
+	bytes = append(bytes, ERROR)
+	bytes = append(bytes, []byte(v.error)...)
+	bytes = append(bytes, '\r', '\n')
+
+	return bytes
+}
+
+
+// Structure of RESP "array":
+// *[len-of-array][Carriage Return Line Feed][firstElement]...[elementN][Carriage Return Line Feed]
+// doc: https://redis.io/docs/latest/develop/reference/protocol-spec/#arrays
+func (v Value) marshalArray() []byte {
+	var bytes []byte
+
+	bytes = append(bytes, ARRAY)
+	bytes = append(bytes, strconv.Itoa(len(v.array))...)
+	bytes = append(bytes, '\r', '\n')
+	
+	for i := 0; i < len(v.array); i++ {
+		bytes = append(bytes, v.array[i].Marshal()...)
+	}
+
+	return bytes;
+}
+
+// Structure of RESP "string":
+// +[string][Carriage Return Line Feed]
+// doc: https://redis.io/docs/latest/develop/reference/protocol-spec/#simple-strings
+func (v Value) marshalString() []byte {
+	var result []byte
+
+	result = append(result, STRING)
+	result = append(result, v.str)
+	result = append(result, '\r' , '\n')
+
+	return result
+}
+
+// The structure of RESP "bulk":
+// $[len-of-the-bulk-sting][Carriage Return Line Feed][bulk-string][Carriage-Return]
+// doc: https://redis.io/docs/latest/develop/reference/protocol-spec/#bulk-strings
+func (v Value) marshalBulk() []byte {
+	var bytes []byte
+
+	bytes = append(bytes, BULK)
+	bytes = append(bytes, strconv.Itoa(len(v.bulk))...)
+	bytes = append(bytes, '\r', '\n')
+	bytes = append(bytes, v.bulk...)
+	bytes = append(bytes, '\r', '\n')
+
+	return bytes
 }
 
 func (r *Resp) readLine() (line []byte, n int, err error) {
@@ -73,23 +180,6 @@ func (r *Resp) readInteger() (num int, n int, err error) {
 	}
 
 	return int(_64bitInteger), n, nil
-}
-
-func (r *Resp) Read() (Value, error) {
-	resp_type, err := r.reader.ReadByte()
-	if err != nil {
-		return Value{}, err
-	}
-
-	switch resp_type {
-	case ARRAY:
-		return r.readArray()
-	case BULK:
-		return r.readBulk()
-	default:
-		fmt.Println("Unknown type: ", string(resp_type))
-		return Value{}, nil
-	}
 }
 
 
