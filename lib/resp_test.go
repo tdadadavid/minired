@@ -10,7 +10,6 @@ import (
 
 
 func TestReadBulk_WhenCorrectSyntacIsNotPassed(t *testing.T) {
-	// good scenerio
 	t.Run("It fails when a wrong bulk string syntax is sent from client.", func(t *testing.T) {
 		wrong_bulk_string := "$n8\r\nsixtyo\r\n"
 		reader := strings.NewReader(wrong_bulk_string)
@@ -20,8 +19,6 @@ func TestReadBulk_WhenCorrectSyntacIsNotPassed(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid syntax")
 	})
-
-
 }
 
 func TestReadBulk_WhenCorrectSyntaxIsPassed(t *testing.T) {
