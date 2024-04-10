@@ -37,7 +37,6 @@ func TestReadArray_WhenCorrectSyntazIsPassed(t *testing.T) {
 }
 
 
-
 func TestReadBulk_WhenCorrectSyntacIsNotPassed(t *testing.T) {
 	t.Run("It fails when a wrong bulk string syntax is sent from client.", func(t *testing.T) {
 		wrong_bulk_string := "$n8\r\nsixtyo\r\n"
@@ -75,4 +74,4 @@ func TestBulkString_ExpectValueTypeToBeBulk(t *testing.T) {
 		assert.NotNil(t, result.bulk)
 		assert.Equal(t, result.typ, "bulk")
 	})
-}
+}		
