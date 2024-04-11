@@ -38,8 +38,6 @@ func main() {
 			return
 		}
 
-		fmt.Println(value)
-
 		// if the request sent is not an array type ignore it
 		if value.Typ != "array" {
 			continue

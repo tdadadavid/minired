@@ -39,3 +39,53 @@ func TestPingCommand(t *testing.T) {
 
 	})
 }
+
+func TestSetCommand(t *testing.T) {
+	t.Run("It set the given key to the provided value", func(t *testing.T) {
+		key := "admin"
+		val := "king"
+
+		args := &Value{
+			Array: []Value{
+				{Typ: "bulk", Bulk: key},
+				{Typ: "bulk", Bulk: val},
+			},
+		}
+
+		result := set(context.Background(), args.Array)
+
+		if KvStore.store[key] != val {
+			t.Fatalf(key, "was not assigned value ", val)
+		}
+
+		assert.Equal(t, result.Str, "OK")
+	})
+
+	t.Run("It updates the key's value on every call", func(t *testing.T) {
+		key := "admin"
+		val1 := "king"
+		val2 := "monarch"
+
+		args := []Value{
+			{
+				Array: []Value{
+					{Typ: "bulk", Bulk: key},
+					{Typ: "bulk", Bulk: val1},
+				},
+			},
+			{
+				Array: []Value{
+					{Typ: "bulk", Bulk: key},
+					{Typ: "bulk", Bulk: val2},
+				},
+			},
+		}
+
+		for _, v := range args {
+			set(context.Background(), v.Array)
+		}
+
+		assert.NotEqual(t, KvStore.store[key], val1)
+		assert.Equal(t, KvStore.store[key], val2)
+	})
+}

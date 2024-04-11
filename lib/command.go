@@ -5,12 +5,20 @@ import (
 	"sync"
 )
 
+// the string is the command while the func is the handler
+var CommandHandlers = map[string]func(ctx context.Context, val []Value) Value{
+	"ping": ping,
+	"set":  set,
+	"get":  get,
+}
+
 type KeyValue struct {
 	mu    sync.RWMutex
 	store map[string]string
 }
 
-var kvStore KeyValue = KeyValue{
+// for testing purposes.
+var KvStore KeyValue = KeyValue{
 	store: map[string]string{},
 	mu:    sync.RWMutex{},
 }
@@ -31,30 +39,23 @@ func ping(_ context.Context, args []Value) Value {
 
 // doc: https://redis.io/docs/latest/commands/set/
 func set(_ context.Context, args []Value) Value {
-	kvStore.mu.Lock()
-	defer kvStore.mu.Unlock()
+	KvStore.mu.Lock()
+	defer KvStore.mu.Unlock()
 
 	key := args[0].Bulk
 	value := args[1].Bulk
+	KvStore.store[key] = value
 
-	kvStore.store[key] = value
 	return Value{Typ: "string", Str: "OK"}
 }
 
 func get(_ context.Context, args []Value) Value {
-	kvStore.mu.RLock()
-	defer kvStore.mu.RUnlock()
+	KvStore.mu.RLock()
+	defer KvStore.mu.RUnlock()
 
 	key := args[0].Bulk
 
-	value := kvStore.store[key]
+	value := KvStore.store[key]
 
 	return Value{Typ: "string", Str: value}
-}
-
-// the string is the command while the func is the handler
-var CommandHandlers = map[string]func(ctx context.Context, val []Value) Value{
-	"ping": ping,
-	"set":  set,
-	"get":  get,
 }
