@@ -8,12 +8,11 @@ import (
 
 func TestPingCommand(t *testing.T) {
 	tests := []struct {
-		desc    string
 		args    string
 		expects string
 	}{
-		{desc: "", expects: "PONG"},
-		{desc: "It returns the arguement passed to it when called", args: "hello world", expects: "hello world"},
+		{expects: "PONG"},
+		{args: "hello world", expects: "hello world"},
 	}
 
 	t.Run("It returns PONG when no arguement is passed", func(t *testing.T) {
