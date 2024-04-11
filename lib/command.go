@@ -63,8 +63,8 @@ func get(_ context.Context, args []Value) Value {
 
 	key := args[0].Bulk
 
-	value := KvStore.store[key]
-	if value == "" {
+	value, ok := KvStore.store[key]
+	if !ok {
 		return Value{Typ: "string", Str: "nil"}
 	}
 
