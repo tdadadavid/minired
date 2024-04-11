@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-
 )
 
 // Reference study: https://redis.io/docs/reference/protocol-spec/
@@ -36,6 +35,25 @@ type Resp struct {
 	reader *bufio.Reader
 }
 
+type Writer struct {
+	writer io.Writer
+}
+
+func NewWriter(w io.Writer) *Writer {
+	return &Writer{ writer: w }
+}
+
+func (w Writer) Write(v Value) error {
+	result := v.Marshal()
+	
+	_, err := w.writer.Write(result)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func NewResp(rd io.Reader) *Resp {
 	return &Resp{ reader: bufio.NewReader(rd) }
 }
@@ -56,6 +74,8 @@ func (r *Resp) Read() (Value, error) {
 		return Value{}, nil
 	}
 }
+
+
 
 // Convert respsonse into RESP type.
 func (v Value) Marshal() ([]byte)  {
