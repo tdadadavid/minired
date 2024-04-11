@@ -74,4 +74,4 @@ func TestBulkString_ExpectValueTypeToBeBulk(t *testing.T) {
 		assert.NotNil(t, result.bulk)
 		assert.Equal(t, result.typ, "bulk")
 	})
-}		
+}

@@ -130,7 +130,7 @@ func (v Value) marshalString() []byte {
 }
 
 // The structure of RESP "bulk":
-// $[len-of-the-bulk-sting][Carriage Return Line Feed][bulk-string][Carriage-Return]
+// $[len-of-the-bulk-sting][Carriage Return Line Feed][bulk-string][Carriage-Return-Line-Feed]
 // doc: https://redis.io/docs/latest/develop/reference/protocol-spec/#bulk-strings
 func (v Value) marshalBulk() []byte {
 	var bytes []byte
