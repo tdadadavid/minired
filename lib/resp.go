@@ -27,7 +27,6 @@ type Value struct {
 	Str   string  // holds all string requests.
 	Bulk  string  // holds all bulk string requests.
 	Array []Value // holds all array requests
-	Error string
 }
 
 type Resp struct {
@@ -109,7 +108,7 @@ func (v Value) marshallError() []byte {
 	var bytes []byte
 
 	bytes = append(bytes, ERROR)
-	bytes = append(bytes, []byte(v.Error)...)
+	bytes = append(bytes, []byte(v.Str)...)
 	bytes = append(bytes, '\r', '\n')
 
 	return bytes
