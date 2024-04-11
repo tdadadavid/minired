@@ -2,6 +2,8 @@ package lib
 
 import (
 	"context"
+	"math/rand"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -61,6 +63,21 @@ func TestSetCommand(t *testing.T) {
 		assert.Equal(t, result.Str, "OK")
 	})
 
+	t.Run("It returns an error value when incorrect number of args is sents", func(t *testing.T) {
+		key := "admin"
+
+		args := &Value{
+			Array: []Value{
+				{Typ: "bulk", Bulk: key},
+			},
+		}
+
+		result := set(context.Background(), args.Array)
+
+		assert.Contains(t, result.Str, "ERR")
+		assert.Equal(t, result.Typ, "error")
+	})
+
 	t.Run("It updates the key's value on every call", func(t *testing.T) {
 		key := "admin"
 		val1 := "king"
@@ -87,5 +104,57 @@ func TestSetCommand(t *testing.T) {
 
 		assert.NotEqual(t, KvStore.store[key], val1)
 		assert.Equal(t, KvStore.store[key], val2)
+	})
+}
+
+func TestGetCommand(t *testing.T) {
+	t.Run("It returns an error when incorrect number of args is sent", func(t *testing.T) {
+
+		args := &Value{
+			Array: []Value{},
+		}
+
+		result := get(context.Background(), args.Array)
+
+		assert.Contains(t, result.Str, "ERR")
+		assert.Equal(t, result.Typ, "error")
+	})
+
+	t.Run("It returns nil if a value has not been set for the provided key", func(t *testing.T) {
+		key := strconv.Itoa(rand.Intn(50)) //random key
+
+		args := &Value{
+			Array: []Value{
+				{Typ: "bulk", Bulk: key},
+			},
+		}
+
+		result := get(context.Background(), args.Array)
+
+		assert.Contains(t, result.Str, "nil")
+		assert.Equal(t, result.Typ, "string")
+	})
+
+	t.Run("It retrieves the value of the key set", func(t *testing.T) {
+		key := "admin"
+		val := "king"
+
+		args := &Value{
+			Array: []Value{
+				{Typ: "bulk", Bulk: key},
+				{Typ: "bulk", Bulk: val},
+			},
+		}
+		_ = set(context.Background(), args.Array)
+
+		args = &Value{
+			Array: []Value{
+				{Typ: "bulk", Bulk: key},
+			},
+		}
+		result := get(context.Background(), args.Array)
+
+		assert.Equal(t, result.Str, val)
+		assert.Equal(t, result.Typ, "string")
 	})
 }

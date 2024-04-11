@@ -43,7 +43,7 @@ func set(_ context.Context, args []Value) Value {
 	defer KvStore.mu.Unlock()
 
 	if len(args) != 2 {
-		return Value{ Typ: "error", Str: "ERR incorrect number of arguements for the 'set' comand"}
+		return Value{Typ: "error", Str: "ERR incorrect number of arguements for the 'set' command"}
 	}
 
 	key := args[0].Bulk
@@ -57,9 +57,16 @@ func get(_ context.Context, args []Value) Value {
 	KvStore.mu.RLock()
 	defer KvStore.mu.RUnlock()
 
+	if len(args) != 1 {
+		return Value{Typ: "error", Str: "ERR incorrect number of arguements for the 'get' command"}
+	}
+
 	key := args[0].Bulk
 
 	value := KvStore.store[key]
+	if value == "" {
+		return Value{Typ: "string", Str: "nil"}
+	}
 
 	return Value{Typ: "string", Str: value}
 }
