@@ -28,7 +28,7 @@ func TestPingCommand(t *testing.T) {
 	t.Run("It returns the arguement passed to it when called", func(t *testing.T) {
 		value := &Value{
 			Array: []Value{
-				{Typ: "string", Bulk: tests[1].args},
+				{Typ: "bulk", Bulk: tests[1].args},
 			},
 		}
 		result := ping(value.Array)
