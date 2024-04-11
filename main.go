@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go_redis/lib"
 	"net"
+	"strings"
 )
 
 func main() {
@@ -35,9 +36,30 @@ func main() {
 			fmt.Println(err)
 			return
 		}
+		
+		// if the request sent is not an array type ignore it
+		if value.Typ != "array" {
+			continue
+		}
+
+		// ignore empty request 
+		if len(value.Array) == 0 {
+			continue
+		}
+
+		// extract the command & arguements from the request
+		// redis commands are case-insensitive [https://redis.io/docs/latest/commands/command/]
+		command := strings.ToLower(value.Array[0].Bulk) 
+		args := value.Array[1:]
+
+		// get the handler for the command .
+		handler := lib.CommandHandlers[command]
+
+		// and feed it the arguements
+		result := handler(args)
 
 		writer := lib.NewWriter(conn)
-		writer.Write(value)
+		writer.Write(result)
 	}
 
 }
