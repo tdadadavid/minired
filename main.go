@@ -35,7 +35,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		// for any request the user makes return a pong.
+
 		writer := lib.NewWriter(conn)
 		writer.Write(value)
 	}
