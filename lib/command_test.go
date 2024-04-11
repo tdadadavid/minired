@@ -20,6 +20,7 @@ func TestPingCommand(t *testing.T) {
 		value := &Value{}
 		result := ping(value.Array)
 
+		assert.Equal(t, "string", result.Typ)
 		assert.Equal(t, tests[0].expects, result.Str)
 
 	})
