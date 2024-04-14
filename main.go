@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"go_redis/lib"
+	"minired/lib"
 	"net"
 	"strings"
 )
@@ -29,6 +29,24 @@ func main() {
 	// [remember to study tcp,http protocols]
 	defer conn.Close()
 
+	path := "minired.aof"
+	aof, err := lib.NewAppendOnlyFile(path)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+
+	aof.Read(func(value lib.Value) {
+		command := strings.ToLower(value.Array[0].Bulk)
+		args := value.Array[1:]
+
+		handler, ok := lib.CommandHandlers[command]
+		if !ok {
+			fmt.Println("Command not supported: [", command, "]")
+		}
+		handler(context.Background(), args)
+	})
+
 	for {
 		resp := lib.NewResp(conn)
 
@@ -48,19 +66,27 @@ func main() {
 			continue
 		}
 
+		writer := lib.NewWriter(conn)
+
 		// extract the command & arguements from the request
 		// redis commands are case-insensitive [https://redis.io/docs/latest/commands/command/]
 		command := strings.ToLower(value.Array[0].Bulk)
 		args := value.Array[1:]
 
-		// get the handler for the command .
-		handler := lib.CommandHandlers[command]
+		if command == "set" || command == "hset" {
+			aof.Write(value)
+		}
 
+		// get the handler for the command .
+		handler, ok := lib.CommandHandlers[command]
+		if !ok {
+			fmt.Println("Command not supported: [", command, "]")
+			writer.Write(lib.Value{Typ: "string", Str: ""})
+			continue
+		}
 		// and feed it the arguements
 		result := handler(context.Background(), args)
 
-		writer := lib.NewWriter(conn)
 		writer.Write(result)
 	}
-
 }
