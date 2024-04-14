@@ -23,7 +23,7 @@ const (
 // it will be used in the serialization/desrialization of reqeust
 type Value struct {
 	Typ   string  // holds the datatype of the value from the requests.
-	Num   int32   // holds all integer requests.
+	Num   int   // holds all integer requests.
 	Str   string  // holds all string requests.
 	Bulk  string  // holds all bulk string requests.
 	Array []Value // holds all array requests
@@ -143,6 +143,7 @@ func (v Value) marshalString() []byte {
 
 	return result
 }
+
 
 // The structure of RESP "bulk":
 // $[len-of-the-bulk-sting][Carriage Return Line Feed][bulk-string][Carriage-Return-Line-Feed]
