@@ -11,25 +11,23 @@ import (
 
 // datatypes supported in the RESP
 const (
-	STRING = '+'
-	BULK = '$'
-	ERROR = '-'
+	STRING  = '+'
+	BULK    = '$'
+	ERROR   = '-'
 	INTEGER = ':'
-	ARRAY = '*'
-	NULL = '_'
+	ARRAY   = '*'
+	NULL    = '_'
 )
 
 // will hold the request arguements and command
 // it will be used in the serialization/desrialization of reqeust
 type Value struct {
-	typ string // holds the datatype of the value from the requests.
-	num int32 // holds all integer requests.
-	str byte // holds all string requests.
-	bulk string // holds all bulk string requests.
-	array []Value // holds all array requests
-	error string
+	Typ   string  // holds the datatype of the value from the requests.
+	Num   int   // holds all integer requests.
+	Str   string  // holds all string requests.
+	Bulk  string  // holds all bulk string requests.
+	Array []Value // holds all array requests
 }
-
 
 type Resp struct {
 	reader *bufio.Reader
@@ -40,12 +38,12 @@ type Writer struct {
 }
 
 func NewWriter(w io.Writer) *Writer {
-	return &Writer{ writer: w }
+	return &Writer{writer: w}
 }
 
 func (w Writer) Write(v Value) error {
 	result := v.Marshal()
-	
+
 	_, err := w.writer.Write(result)
 	if err != nil {
 		return err
@@ -55,7 +53,7 @@ func (w Writer) Write(v Value) error {
 }
 
 func NewResp(rd io.Reader) *Resp {
-	return &Resp{ reader: bufio.NewReader(rd) }
+	return &Resp{reader: bufio.NewReader(rd)}
 }
 
 func (r *Resp) Read() (Value, error) {
@@ -75,11 +73,9 @@ func (r *Resp) Read() (Value, error) {
 	}
 }
 
-
-
 // Convert respsonse into RESP type.
-func (v Value) Marshal() ([]byte)  {
-	switch v.typ {
+func (v Value) Marshal() []byte {
+	switch v.Typ {
 	case "array":
 		return v.marshalArray()
 	case "bulk":
@@ -112,12 +108,11 @@ func (v Value) marshallError() []byte {
 	var bytes []byte
 
 	bytes = append(bytes, ERROR)
-	bytes = append(bytes, []byte(v.error)...)
+	bytes = append(bytes, []byte(v.Str)...)
 	bytes = append(bytes, '\r', '\n')
 
 	return bytes
 }
-
 
 // Structure of RESP "array":
 // *[len-of-array][Carriage Return Line Feed][firstElement]...[elementN][Carriage Return Line Feed]
@@ -126,14 +121,14 @@ func (v Value) marshalArray() []byte {
 	var bytes []byte
 
 	bytes = append(bytes, ARRAY)
-	bytes = append(bytes, strconv.Itoa(len(v.array))...)
+	bytes = append(bytes, strconv.Itoa(len(v.Array))...)
 	bytes = append(bytes, '\r', '\n')
-	
-	for i := 0; i < len(v.array); i++ {
-		bytes = append(bytes, v.array[i].Marshal()...)
+
+	for i := 0; i < len(v.Array); i++ {
+		bytes = append(bytes, v.Array[i].Marshal()...)
 	}
 
-	return bytes;
+	return bytes
 }
 
 // Structure of RESP "string":
@@ -143,11 +138,12 @@ func (v Value) marshalString() []byte {
 	var result []byte
 
 	result = append(result, STRING)
-	result = append(result, v.str)
-	result = append(result, '\r' , '\n')
+	result = append(result, v.Str...)
+	result = append(result, '\r', '\n')
 
 	return result
 }
+
 
 // The structure of RESP "bulk":
 // $[len-of-the-bulk-sting][Carriage Return Line Feed][bulk-string][Carriage-Return-Line-Feed]
@@ -156,9 +152,9 @@ func (v Value) marshalBulk() []byte {
 	var bytes []byte
 
 	bytes = append(bytes, BULK)
-	bytes = append(bytes, strconv.Itoa(len(v.bulk))...)
+	bytes = append(bytes, strconv.Itoa(len(v.Bulk))...)
 	bytes = append(bytes, '\r', '\n')
-	bytes = append(bytes, v.bulk...)
+	bytes = append(bytes, v.Bulk...)
 	bytes = append(bytes, '\r', '\n')
 
 	return bytes
@@ -183,9 +179,8 @@ func (r *Resp) readLine() (line []byte, n int, err error) {
 
 	// return from the beginning of the string to the second-to-the-last character
 	// also return the number of characters on the line just read.
-	return line[:len(line)-2], n , nil
+	return line[:len(line)-2], n, nil
 }
-
 
 func (r *Resp) readInteger() (num int, n int, err error) {
 	line, n, err := r.readLine()
@@ -202,10 +197,9 @@ func (r *Resp) readInteger() (num int, n int, err error) {
 	return int(_64bitInteger), n, nil
 }
 
-
 func (r *Resp) readArray() (Value, error) {
 	value := Value{}
-	value.typ = "array"
+	value.Typ = "array"
 
 	// get the len of the array by reading the next character.
 	// ["*", "2", ""]
@@ -216,16 +210,16 @@ func (r *Resp) readArray() (Value, error) {
 		return value, err
 	}
 
-	value.array = make([]Value, 0)
+	value.Array = make([]Value, 0)
 
 	for i := 0; i < arr_len; i++ {
 		// recursion happens here [read the next stream of bytes.]
-		val, err := r.Read() 
+		val, err := r.Read()
 		if err != nil {
 			return value, err
 		}
 
-		value.array = append(value.array, val)
+		value.Array = append(value.Array, val)
 	}
 
 	return value, nil
@@ -233,10 +227,10 @@ func (r *Resp) readArray() (Value, error) {
 
 func (r *Resp) readBulk() (Value, error) {
 	val := Value{}
-	val.typ = "bulk"
+	val.Typ = "bulk"
 
 	// read next byte to know the length of the string
-	// indicates the length of the string 
+	// indicates the length of the string
 	size, _, err := r.readInteger()
 	if err != nil {
 		return val, err
@@ -244,7 +238,7 @@ func (r *Resp) readBulk() (Value, error) {
 
 	bulk := make([]byte, size)
 	r.reader.Read(bulk)
-	val.bulk = string(bulk)
+	val.Bulk = string(bulk)
 
 	//read trailing line [CLRF]
 	r.readLine()
