@@ -10,9 +10,9 @@ Minimalist cache database with publish-subscribe capabilities
   - HGET
   - HGETALL
 * Persistence storage using [AOF](https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/)
-* Publish to several channels
 * Subscribing to channels
 * Multi-client connections
+* Handling transactions.
 
 ## Build✨
 Clone the repo
